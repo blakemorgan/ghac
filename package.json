@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/blakemorgan/ghac/issues"
   },
-  "homepage": "https://github.com/blakemorgan/ghac#readme"
+  "homepage": "https://github.com/blakemorgan/ghac#readme",
+  "bin": {
+    "ghac": "./cli.js"
+  }
 }
