@@ -1,0 +1,12 @@
+# IDE
+/.idea/
+/.vscode/
+
+# NPM
+/node_modules/
+*-debug.log
+
+# Operating Systems
+.DS_Store
+Thumbs.db
+*~

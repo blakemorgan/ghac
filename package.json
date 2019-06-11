@@ -1,0 +1,24 @@
+{
+  "name": "ghac",
+  "version": "0.1.0",
+  "description": "GitHub as code.",
+  "main": "cli.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blakemorgan/ghac.git"
+  },
+  "keywords": [
+    "git",
+    "github",
+    "iac"
+  ],
+  "author": "Blake Morgan <blake_morgan@byu.edu>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/blakemorgan/ghac/issues"
+  },
+  "homepage": "https://github.com/blakemorgan/ghac#readme"
+}
