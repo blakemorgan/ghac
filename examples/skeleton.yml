@@ -2,37 +2,42 @@
 
 # POST /user/repos
 # POST /orgs/:org/repos
+name: # string, required
+org: # string, optional
+description: # string, optional
+hoempage: # string, optional
+private: # boolean, optional, default false
+has_isues: # boolean, optional, default true
+has_projects: # boolean, optional, default true
+has_wiki: # boolean, optional, default true
+team_name: # string, optional, not in API, only if in org
+auto_init: # boolean, MUST be true to allow for the creation of refs, optional, default false
+gitignore_template: # string, optional
+license_template: # string, optional
+allow_squash_merge: # boolean, optional, default true
+allow_merge_commit: # boolean, optional, default true
+allow_rebase_merge: # boolean, optional, default true
+
 # PUT /repos/:owner/:repo/topics
-# PUT /repos/:owner/:repo/automated-security-fixes
-# PUT /repos/:owner/:repo/collaborators/:username
-# POST /repos/:owner/:repo/keys
-# PUT /teams/:team_id/repos/:owner/:repo
-name: # string
-is_org: # boolean, not API
-description: # string
-hoempage: # string
-private: # boolean
-has_isues: # boolean
-has_projects: # boolean
-has_wiki: # boolean
-team_id: # int
-auto_init: # boolean, MUST be true to allow for the creation of refs
-gitignore_template: # string
-license_template: # string
-allow_squash_merge: # boolean
-allow_merge_commit: # boolean
-allow_rebase_merge: # boolean
 topics:
   - # topic 1
   - # topic 2
   - # topic ...
+
+# PUT /repos/:owner/:repo/automated-security-fixes
 auto_security_fixes: # boolean
+
+# PUT /repos/:owner/:repo/collaborators/:username
 user_collaborators:
   - name: # user name
     permission: # string
+
+# PUT /teams/:team_id/repos/:owner/:repo
 team_collaborators:
   - name: # team name
     permission: # string
+
+# POST /repos/:owner/:repo/keys
 deploy_keys:
   - title: # string
     key: # string
@@ -41,16 +46,16 @@ deploy_keys:
 ### REPO PROJECTS ###
 
 # POST /repos/:owner/:repo/projects
-# POST /projects/:project_id/columns
-# POST /projects/columns/:column_id/cards
 projects:
   - name: # string
     collaborators:
       - # username 1
       - # username 2
       - # ...
+    # POST /projects/:project_id/columns
     columns:
       - name: # string
+        # POST /projects/columns/:column_id/cards
         cards:
           - note: # string 1
           - note: # string 2

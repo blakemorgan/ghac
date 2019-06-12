@@ -25,6 +25,8 @@
     "ghac": "./cli.js"
   },
   "dependencies": {
-    "inquirer": "^6.3.1"
+    "@octokit/rest": "^16.28.1",
+    "inquirer": "^6.3.1",
+    "js-yaml": "^3.13.1"
   }
 }
