@@ -1,0 +1,90 @@
+### REPOSITORY ###
+
+# POST /user/repos
+# POST /orgs/:org/repos
+# PUT /repos/:owner/:repo/topics
+# PUT /repos/:owner/:repo/automated-security-fixes
+# PUT /repos/:owner/:repo/collaborators/:username
+# POST /repos/:owner/:repo/keys
+# PUT /teams/:team_id/repos/:owner/:repo
+name: # string
+is_org: # boolean, not API
+description: # string
+hoempage: # string
+private: # boolean
+has_isues: # boolean
+has_projects: # boolean
+has_wiki: # boolean
+team_id: # int
+auto_init: # boolean, MUST be true to allow for the creation of refs
+gitignore_template: # string
+license_template: # string
+allow_squash_merge: # boolean
+allow_merge_commit: # boolean
+allow_rebase_merge: # boolean
+topics:
+  - # topic 1
+  - # topic 2
+  - # topic ...
+auto_security_fixes: # boolean
+user_collaborators:
+  - name: # user name
+    permission: # string
+team_collaborators:
+  - name: # team name
+    permission: # string
+deploy_keys:
+  - title: # string
+    key: # string
+    read_only: # boolean
+
+### REPO PROJECTS ###
+
+# POST /repos/:owner/:repo/projects
+# POST /projects/:project_id/columns
+# POST /projects/columns/:column_id/cards
+projects:
+  - name: # string
+    collaborators:
+      - # username 1
+      - # username 2
+      - # ...
+    columns:
+      - name: # string
+        cards:
+          - note: # string 1
+          - note: # string 2
+          - note: # string ...
+
+### BRANCHES ###
+# PUT /repos/:owner/:repo/branches/:branch/protection
+branches:
+  - name: # branch 1
+    protection:
+      required_status_checks:
+        strict: # boolean
+        contexts:
+          - # Check 1
+          - # Check 2
+          - # ...
+      enforce_admins: # boolean
+      required_pull_request_reviews:
+        dismissal_restrictions:
+          users:
+            - # List of users
+          teams:
+            - # list of teams
+        dismiss_stale_reviews: # boolean
+        require_code_owner_reviews: # boolean
+        required_appriving_review_count: # int
+      restrictions:
+        users:
+          - # List of users
+        teams:
+          - # List of teams
+
+### PAGES ###
+# POST /repos/:owner/:repo/pages
+pages:
+  branch: # branch name
+  path: # path

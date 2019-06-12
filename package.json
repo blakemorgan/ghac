@@ -23,5 +23,8 @@
   "homepage": "https://github.com/blakemorgan/ghac#readme",
   "bin": {
     "ghac": "./cli.js"
+  },
+  "dependencies": {
+    "inquirer": "^6.3.1"
   }
 }
