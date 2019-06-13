@@ -45,7 +45,7 @@ inquirer.prompt([
 
   try {
     let file = yaml.safeLoad(fs.readFileSync(filename, 'utf8'))
-    await buildRepository(token, file)
+    await scaffoldRepository(token, file)
   } catch (e) {
     console.log(e)
   }
@@ -60,7 +60,7 @@ inquirer.prompt([
  * @param file The parsed YAML file.
  * @returns {Promise<void>}
  */
-async function buildRepository (token, file) {
+async function scaffoldRepository (token, file) {
   const octokit = Octokit({
     auth: token,
     userAgent: `GHaC v${pkg.version}`,
@@ -75,6 +75,12 @@ async function buildRepository (token, file) {
   })
 
   try {
+    let name
+    let isOrg = false
+    if (file.hasOwnProperty('org')) {
+      name = file.org
+      isOrg = true
+    }
     await createRepo(file, octokit)
   } catch (e) {
     console.log(e.message)
@@ -85,9 +91,11 @@ async function buildRepository (token, file) {
  *
  * @param file The GHaC file
  * @param octokit The object to interface with the API
+ * @param userOrgName
+ * @param isOrg
  * @returns {Promise<void>}
  */
-async function createRepo (file, octokit) {
+async function createRepo (file, octokit, userOrgName, isOrg) {
   // Build the request object
   let repo = {
     name: file.name,
@@ -119,7 +127,8 @@ async function createRepo (file, octokit) {
     repo.allow_rebase_merge = file.allow_rebase_merge === true
 
   // Send the request
-  if (file.hasOwnProperty('org')) {
+  let createdRepo
+  if (isOrg) {
     // Set org name
     repo.org = file.org
 
@@ -128,10 +137,57 @@ async function createRepo (file, octokit) {
       repo.team_id = await getTeamIdFromName(octokit, file.team_name, file.org)
 
     // Create the org repo
-    await octokit.repos.createInOrg(repo)
-  } else {
-    // Create the user repo
-    await octokit.repos.createForAuthenticatedUser(repo)
+    createdRepo = await octokit.repos.createInOrg(repo)
+
+    // Configure team collaborators
+    if (file.hasOwnProperty('team_collaborators') && !file.team_collaborators.empty()) {
+      file.team_collaborators.forEach(async (team) => {
+        await octokit.teams.addOrUpdateRepo({
+          team_id: repo.team_id,
+          owner: userOrgName,
+          repo: createdRepo.data.name,
+          permission: team.permission
+        })
+      })
+    }
+  } else { // Not a repo in an organization
+    createdRepo = await octokit.repos.createForAuthenticatedUser(repo)
+  }
+
+  // Configure the repo
+  if (file.hasOwnProperty('topics'))
+    await octokit.repos.replaceTopics({ owner: userOrgName, repo: createdRepo.data.name, names: file.topics })
+  if (file.hasOwnProperty('auto_security_fixes') && file.auto_security_fixes === true)
+    await octokit.repos.enableVulnerabilityAlerts({ owner: userOrgName, repo: createdRepo.data.name })
+  if (file.hasOwnProperty('user_collaborators') && !file.user_collaborators.empty()) {
+    file.user_collaborators.forEach(async (user) => {
+      await octokit.repos.addCollaborator({
+        owner: userOrgName,
+        repo: createdRepo.data.name,
+        username: user.name,
+        permission: user.permission
+      })
+    })
+  }
+  if (file.hasOwnProperty('deploy_keys')) {
+    file.deploy_keys.forEach(async (key) => {
+      if (key.title) {
+        await octokit.repos.addDeployKey({
+          owner: userOrgName,
+          repo: createdRepo.data.name,
+          key: key.key,
+          read_only: key.read_only,
+          title: key.title
+        })
+      } else {
+        await octokit.repos.addDeployKey({
+          owner: userOrgName,
+          repo: createdRepo.data.name,
+          key: key.key,
+          read_only: key.read_only
+        })
+      }
+    })
   }
 }
 
@@ -142,10 +198,11 @@ async function createRepo (file, octokit) {
  * @param orgName
  * @returns {Promise<number>}
  */
-async function getTeamIdFromName(octokit, teamName, orgName) {
-  let {data: team} = await octokit.teams.getByName({
+async function getTeamIdFromName (octokit, teamName, orgName) {
+  let { data: team } = await octokit.teams.getByName({
     org: orgName,
     team_slug: teamName
   })
   return team.id
 }
+
