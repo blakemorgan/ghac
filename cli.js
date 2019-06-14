@@ -89,6 +89,7 @@ async function scaffoldRepository (token, file) {
 }
 
 /**
+ * Sends requests to the GitHub API to create the repo
  *
  * @param file The GHaC file
  * @param octokit The object to interface with the API
@@ -153,22 +154,6 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
         })
       })
     }
-
-    // Configure PR Teams
-    // file.branches.forEach((branch) => {
-    //   if (branch.hasOwnProperty('protection')) {
-    //     if (branch.protection.hasOwnProperty('required_pull_request_reviews')) {
-    //       if (branch.protection.required_pull_request_reviews.hasOwnProperty('dismissal_restrictions')) {
-    //         if (branch.protection.required_pull_request_reviews.dismissal_restrictions.hasOwnProperty('teams')) {
-    //           branch.protection.required_pull_request_reviews.dismissal_restrictions.teams.forEach((teams) => {
-    //
-    //           })
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
-    // })
   } else { // Not a repo in an organization
     createdRepo = await octokit.repos.createForAuthenticatedUser(repo)
   }
@@ -318,6 +303,7 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
 }
 
 /**
+ * Get the team name from the team ID.
  *
  * @param octokit
  * @param teamName
