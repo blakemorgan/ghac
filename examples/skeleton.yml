@@ -81,7 +81,7 @@ branches:
             - # list of teams
         dismiss_stale_reviews: # boolean
         require_code_owner_reviews: # boolean
-        required_appriving_review_count: # int
+        required_approving_review_count: # int
       restrictions:
         users:
           - # List of users
@@ -91,5 +91,6 @@ branches:
 ### PAGES ###
 # POST /repos/:owner/:repo/pages
 pages:
+  enabled: # boolean
   branch: # branch name
   path: # path

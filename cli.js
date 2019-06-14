@@ -69,7 +69,8 @@ async function scaffoldRepository (token, file) {
       'london',
       'hellcat',
       'intertia',
-      'luke-cage'
+      'luke-cage',
+      'mister-fantastic'
     ],
     baseUrl: 'https://api.github.com'
   })
@@ -81,7 +82,7 @@ async function scaffoldRepository (token, file) {
       name = file.org
       isOrg = true
     }
-    await createRepo(file, octokit)
+    await createRepo(file, octokit, name, isOrg)
   } catch (e) {
     console.log(e.message)
   }
@@ -128,6 +129,8 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
 
   // Send the request
   let createdRepo
+  let prTeams = Array()
+  let restrictionsTeams = Array()
   if (isOrg) {
     // Set org name
     repo.org = file.org
@@ -150,6 +153,22 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
         })
       })
     }
+
+    // Configure PR Teams
+    // file.branches.forEach((branch) => {
+    //   if (branch.hasOwnProperty('protection')) {
+    //     if (branch.protection.hasOwnProperty('required_pull_request_reviews')) {
+    //       if (branch.protection.required_pull_request_reviews.hasOwnProperty('dismissal_restrictions')) {
+    //         if (branch.protection.required_pull_request_reviews.dismissal_restrictions.hasOwnProperty('teams')) {
+    //           branch.protection.required_pull_request_reviews.dismissal_restrictions.teams.forEach((teams) => {
+    //
+    //           })
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    // })
   } else { // Not a repo in an organization
     createdRepo = await octokit.repos.createForAuthenticatedUser(repo)
   }
@@ -187,6 +206,113 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
           read_only: key.read_only
         })
       }
+    })
+  }
+
+  // Create branches
+  if (file.hasOwnProperty('branches')) {
+    const sha = await octokit.repos.getCommitRefSha({
+      owner: userOrgName,
+      repo: createdRepo.data.name,
+      ref: 'refs/heads/master'
+    })
+    file.branches.forEach(async (branch) => {
+      await octokit.git.createRef({
+        owner: userOrgName,
+        repo: createdRepo.data.name,
+        ref: `refs/heads/${branch.name}`,
+        sha: sha
+      })
+
+      // Prepare status checks
+      let statusCheck = null
+      if (branch.protection.hasOwnProperty('required_status_checks')) {
+        let contexts = Array()
+        branch.protection.required_status_checks.contexts.forEach((context) => {
+          contexts.push(context)
+        })
+        statusCheck = {
+          strict: branch.protection.required_status_checks.strict,
+          contexts: contexts
+        }
+      }
+
+      // Prepare pull request reviews
+      let requiredPrReviews = null
+      if (branch.protection.hasOwnProperty('required_pull_request_reviews')) {
+        requiredPrReviews = {}
+        let dismissalRestrictions = null
+        if (branch.protection.required_pull_request_reviews.hasOwnProperty('dismissal_restrictions')) {
+          dismissalRestrictions = {}
+          if (branch.protection.required_pull_request_reviews.dismissal_restrictions.hasOwnProperty('users')) {
+            let users = Array()
+            branch.protection.required_pull_request_reviews.dismissal_restrictions.users.forEach((user) => {
+              users.push(user)
+            })
+
+            let teams = Array()
+            branch.protection.required_pull_request_reviews.dismissal_restrictions.teams.forEach((team) => {
+              teams.push(team)
+            })
+            dismissalRestrictions.users = users
+            dismissalRestrictions.teams = teams
+          }
+          requiredPrReviews.dismissal_restrictions = dismissalRestrictions
+        }
+        if (branch.protection.required_pull_request_reviews.hasOwnProperty('dismiss_stale_reviews'))
+          requiredPrReviews.dismiss_stale_reviews = branch.protection.required_pull_request_reviews.dismiss_stale_reviews
+        if (branch.protection.required_pull_request_reviews.hasOwnProperty('require_code_owner_reviews'))
+          requiredPrReviews.require_code_owner_reviews = branch.protection.required_pull_request_reviews.require_code_owner_reviews
+        if (branch.protection.required_pull_request_reviews.hasOwnProperty('required_approving_review_count'))
+          requiredPrReviews.required_approving_review_count = branch.protection.required_pull_request_reviews.required_approving_review_count
+      }
+
+      // Prepare restrictions
+      let restrictions = null
+      if (branch.protection.hasOwnProperty('restrictions')) {
+        restrictions = {}
+        let users = Array()
+        if (branch.protection.restrictions.hasOwnProperty('users')) {
+          branch.protection.restrictions.users.forEach((user) => {
+            users.push(user)
+          })
+        }
+        restrictions.users = users
+        let teams = Array()
+        if (branch.protection.restrictions.hasOwnProperty('teams')) {
+          branch.protection.restrictions.teams.forEach((team) => {
+            teams.push(team)
+          })
+        }
+        restrictions.teams = teams
+      }
+
+      await octokit.repos.updateBranchProtection({
+        owner: userOrgName,
+        repo: createdRepo.data.name,
+        branch: branch.name,
+        required_status_checks: statusCheck,
+        enforce_admins: branch.protection.enforce_admins,
+        required_pull_request_reviews: requiredPrReviews,
+        restrictions: restrictions
+      })
+    })
+  }
+
+  // Configure pages
+  if (file.hasOwnProperty('pages') && file.pages.enabled === true) {
+    let source = null
+    if (file.pages.hasOwnProperty('branch') && file.pages.hasOwnProperty('path')) {
+      source = {
+        branch: file.pages.branch,
+        path: file.pages.path
+      }
+    }
+
+    await octokit.repos.enablePagesSite({
+      owner: userOrgName,
+      repo: createdRepo.data.name,
+      source: source
     })
   }
 }
