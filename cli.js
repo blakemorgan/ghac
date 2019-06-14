@@ -70,7 +70,8 @@ async function scaffoldRepository (token, file) {
       'hellcat',
       'intertia',
       'luke-cage',
-      'mister-fantastic'
+      'mister-fantastic',
+      'dorian'
     ],
     baseUrl: 'https://api.github.com'
   })
@@ -136,18 +137,15 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
     // Set org name
     repo.org = file.org
 
-    // Check is repo should be part of a team
-    if (file.hasOwnProperty('team_name'))
-      repo.team_id = await getTeamIdFromName(octokit, file.team_name, file.org)
-
     // Create the org repo
     createdRepo = await octokit.repos.createInOrg(repo)
 
     // Configure team collaborators
     if (file.hasOwnProperty('team_collaborators') && !file.team_collaborators.empty()) {
       file.team_collaborators.forEach(async (team) => {
+        let teamId = await getTeamIdFromName(octokit, team.name, file.org)
         await octokit.teams.addOrUpdateRepo({
-          team_id: repo.team_id,
+          team_id: teamId,
           owner: userOrgName,
           repo: createdRepo.data.name,
           permission: team.permission
@@ -162,7 +160,10 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
   if (file.hasOwnProperty('topics'))
     await octokit.repos.replaceTopics({ owner: userOrgName, repo: createdRepo.data.name, names: file.topics })
   if (file.hasOwnProperty('auto_security_fixes') && file.auto_security_fixes === true)
+    await octokit.repos.enableAutomatedSecurityFixes({ owner: userOrgName, repo: createdRepo.data.name })
+  if (file.hasOwnProperty('vulnerability_alerts') && file.vulnerability_alerts === true) {
     await octokit.repos.enableVulnerabilityAlerts({ owner: userOrgName, repo: createdRepo.data.name })
+  }
   if (file.hasOwnProperty('user_collaborators') && !file.user_collaborators.empty()) {
     file.user_collaborators.forEach(async (user) => {
       await octokit.repos.addCollaborator({

@@ -5,13 +5,11 @@
 name: # string, required
 org: # string, optional
 description: # string, optional
-hoempage: # string, optional
+homepage: # string, optional
 private: # boolean, optional, default false
 has_isues: # boolean, optional, default true
 has_projects: # boolean, optional, default true
 has_wiki: # boolean, optional, default true
-team_name: # string, optional, not in API, only if in org
-auto_init: # boolean, MUST be true to allow for the creation of refs, optional, default false
 gitignore_template: # string, optional
 license_template: # string, optional
 allow_squash_merge: # boolean, optional, default true
@@ -26,6 +24,8 @@ topics:
 
 # PUT /repos/:owner/:repo/automated-security-fixes
 auto_security_fixes: # boolean
+
+vulnerability_alerts: # boolean
 
 # PUT /repos/:owner/:repo/collaborators/:username
 user_collaborators:
