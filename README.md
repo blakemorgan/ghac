@@ -33,5 +33,6 @@ The `ghac.yml` file contains all the properties to create your repository. The f
 | `allow_squash_merge` | Boolean | No | `true` | Option to allow admins to squash and merge PR's.
 | `allow_merge_commit` | Boolean | No | `true` | Option to allow create of commit when a PR is merged.
 | `allow_rebase_merge` | Boolean | No | `true` | Option to allow admins to rebase and merge PR's
-| `topic` | Array<String> | No | None | Topics of the repository.
+| `topic` | Array\<String\> | No | None | Topics of the repository.
 | `auto_security_fixes` | Boolean | No | `false` | Option to enable automatic security features in the repo.
+| `vulnerability_alerts` | Boolean | No | `false` | Option to enable vulnerability alerts for the repo.
