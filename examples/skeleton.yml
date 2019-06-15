@@ -63,9 +63,8 @@ projects:
           - note: # string ...
 
 ### BRANCHES ###
-# PUT /repos/:owner/:repo/branches/:branch/protection
 branches:
-  - name: # branch 1
+  - name: # string
     protection:
       required_status_checks:
         strict: # boolean
