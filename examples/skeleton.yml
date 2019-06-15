@@ -48,6 +48,7 @@ deploy_keys:
 # POST /repos/:owner/:repo/projects
 projects:
   - name: # string
+    body: # string
     collaborators:
       - # username 1
       - # username 2

@@ -195,6 +195,52 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
     })
   }
 
+  // Create projects
+  if (file.hasOwnProperty('projects')) {
+    file.projects.forEach(async (project) => {
+      let params = {
+        owner: userOrgName,
+        repo: createdRepo.data.name,
+        name: project.name
+      }
+
+      if (project.hasOwnProperty('body'))
+        params.body = project.body
+
+      let createdProject = await octokit.projects.createForRepo(params)
+
+      // Collaborators
+      if (project.hasOwnProperty('collaborators')) {
+        project.collaborators.forEach(async (collaborator) => {
+          await octokit.projects.addCollaborator({
+            project_id: createdProject.data.id,
+            username: collaborator
+          })
+        })
+      }
+
+      // Columns
+      if (project.hasOwnProperty('columns')) {
+        project.columns.forEach(async (column) => {
+          let createdColumn = await octokit.projects.createColumn({
+            project_id: createdProject.data.id,
+            name: column.name
+          })
+
+          // Cards
+          if (column.hasOwnProperty('cards')) {
+            column.cards.forEach(async (note) => {
+              await octokit.projects.createCard({
+                column_id: createdColumn.data.id,
+                note: note
+              })
+            })
+          }
+        })
+      }
+    })
+  }
+
   // Create branches
   if (file.hasOwnProperty('branches')) {
     const sha = await octokit.repos.getCommitRefSha({
