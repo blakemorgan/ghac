@@ -33,7 +33,7 @@ The `ghac.yml` file contains all the properties to create your repository. The f
 | `allow_squash_merge` | Boolean | No | `true` | Option to allow admins to squash and merge PR's.
 | `allow_merge_commit` | Boolean | No | `true` | Option to allow create of commit when a PR is merged.
 | `allow_rebase_merge` | Boolean | No | `true` | Option to allow admins to rebase and merge PR's
-| `topic` | Array\<String\> | No | None | Topics of the repository.
+| `topics` | Array\<String\> | No | None | Topics of the repository.
 | `auto_security_fixes` | Boolean | No | `false` | Option to enable automatic security features in the repo.
 | `vulnerability_alerts` | Boolean | No | `false` | Option to enable vulnerability alerts for the repo.
 
@@ -139,7 +139,7 @@ projects:
 | `required_pull_request_reviews` | Object | No | None | Require at least one approving review on a pull request, before merging. Contains `dismissal_restrictions`, `dismiss_stale_reviews`, `require_code_owner_reviews`, and `required_approving_review_count` properties.
 | `dismissal_restrictions` | Object | No | None | Specify which users and teams can dismiss pull request reviews. Contains the `users` and `teams` properties.
 | `users` | Array\<String\> | No | None | List of users who can dismiss PR's.
-| `teams` | Array<\String\> | No | None | List of teams who can dismiss PR's (only for organizations).
+| `teams` | Array\<String\> | No | None | List of teams who can dismiss PR's (only for organizations).
 | `dismiss_stale_reviews` | Boolean | No | None | Set to `true` if you want to automatically dismiss approving reviews when someone pushes a new commit.
 | `require_code_owner_reviews` | Boolean | No | None | Block merging until a code owner reviews the PR.
 | `required_approving_review_count` | Int | No | None | Number of required approving reviews

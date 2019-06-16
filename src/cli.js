@@ -21,8 +21,9 @@
 const inquirer = require('inquirer')
 const yaml = require('js-yaml')
 const fs = require('fs')
-const Octokit = require('@octokit/rest/index')
+const Octokit = require('@octokit/rest')
 const pkg = require('../package')
+const _ = require('lodash/core')
 
 console.log(
   'GitHub as Code  Copyright (C) 2019  Blake Morgan\n' +
@@ -31,7 +32,7 @@ console.log(
   'under certain conditions; type `show c\' for details.\n'
 )
 
-inquirer.prompt([
+module.exports = inquirer.prompt([
   {
     type: 'password',
     name: 'token',
@@ -47,9 +48,8 @@ inquirer.prompt([
     let file = yaml.safeLoad(fs.readFileSync(filename, 'utf8'))
     await scaffoldRepository(token, file)
   } catch (e) {
-    console.log(e)
+    throw e
   }
-
   console.log('Repository created successfully.')
 }).catch(e => console.log(e.message))
 
@@ -128,7 +128,7 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
     createdRepo = await octokit.repos.createInOrg(repo)
 
     // Configure team collaborators
-    if (file.hasOwnProperty('team_collaborators') && !file.team_collaborators.empty()) {
+    if (file.hasOwnProperty('team_collaborators') && !_.isEmpty(file.team_collaborators)) {
       file.team_collaborators.forEach(async (team) => {
         let teamId = await getTeamIdFromName(octokit, team.name, file.org)
         await octokit.teams.addOrUpdateRepo({
@@ -160,7 +160,7 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
   if (file.hasOwnProperty('vulnerability_alerts') && file.vulnerability_alerts === true) {
     await octokit.repos.enableVulnerabilityAlerts({ owner: userOrgName, repo: createdRepo.data.name })
   }
-  if (file.hasOwnProperty('user_collaborators') && !file.user_collaborators.empty()) {
+  if (file.hasOwnProperty('user_collaborators') && !!_.isEmpty(file.user_collaborators)) {
     file.user_collaborators.forEach(async (user) => {
       await octokit.repos.addCollaborator({
         owner: userOrgName,
@@ -238,18 +238,20 @@ async function createRepo (file, octokit, userOrgName, isOrg) {
 
   // Create branches
   if (file.hasOwnProperty('branches')) {
-    const sha = await octokit.repos.getCommitRefSha({
+    const master = await octokit.git.getRef({
       owner: userOrgName,
       repo: createdRepo.data.name,
-      ref: 'refs/heads/master'
+      ref: 'heads/master'
     })
     file.branches.forEach(async (branch) => {
-      await octokit.git.createRef({
-        owner: userOrgName,
-        repo: createdRepo.data.name,
-        ref: `refs/heads/${branch.name}`,
-        sha: sha
-      })
+      if (branch.name !== 'master') {
+        await octokit.git.createRef({
+          owner: userOrgName,
+          repo: createdRepo.data.name,
+          ref: `refs/heads/${branch.name}`,
+          sha: master.data.object.sha
+        })
+      }
 
       // Prepare status checks
       let statusCheck = null

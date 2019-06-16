@@ -4,7 +4,7 @@
   "description": "GitHub as code.",
   "main": "src/cli.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "lint": "eslint src/**/*.js"
   },
   "repository": {
@@ -16,7 +16,7 @@
     "github",
     "iac"
   ],
-  "author": "Blake Morgan <blake_morgan@byu.edu>",
+  "author": "Blake Morgan <b.morgan.296@gmail.com>",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/blakemorgan/ghac/issues"
@@ -28,14 +28,17 @@
   "dependencies": {
     "@octokit/rest": "^16.28.1",
     "inquirer": "^6.3.1",
-    "js-yaml": "^3.13.1"
+    "js-yaml": "^3.13.1",
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
+    "@types/jest": "^24.0.14",
     "eslint": "^5.16.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.17.3",
     "eslint-plugin-node": "^9.1.0",
     "eslint-plugin-promise": "^4.1.1",
-    "eslint-plugin-standard": "^4.0.0"
+    "eslint-plugin-standard": "^4.0.0",
+    "jest": "^24.8.0"
   }
 }
