@@ -2,8 +2,10 @@
   "name": "ghac",
   "version": "0.1.0",
   "description": "GitHub as code.",
-  "main": "src/tools.js",
+  "main": "dist/tools.ts",
+  "types": "src/index.d.ts",
   "scripts": {
+    "prepublish": "tsc",
     "test": "jest",
     "lint": "eslint src/**/*.js"
   },
@@ -28,8 +30,7 @@
   "dependencies": {
     "@octokit/rest": "^16.28.1",
     "inquirer": "^6.3.1",
-    "js-yaml": "^3.13.1",
-    "lodash": "^4.17.11"
+    "js-yaml": "^3.13.1"
   },
   "devDependencies": {
     "@types/jest": "^24.0.14",

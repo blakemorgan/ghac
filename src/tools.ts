@@ -1,6 +1,6 @@
 import Octokit from '@octokit/rest'
+// @ts-ignore package.json has no typings
 import pkg from '../package'
-import _ from 'lodash/core'
 
 /**
  * Reads the file passed and created a repository based off of its definitions.
@@ -9,8 +9,8 @@ import _ from 'lodash/core'
  * @param file The parsed YAML file.
  * @returns {Promise<void>}
  */
-export async function scaffoldRepository (token, file) {
-  const octokit = Octokit({
+export async function scaffoldRepository (token: string, file: GhacFile) {
+  const octokit = new Octokit({
     auth: token,
     userAgent: `GHaC v${pkg.version}`,
     previews: [
@@ -26,7 +26,7 @@ export async function scaffoldRepository (token, file) {
   })
 
   try {
-    let name
+    let name = ''
     let isOrg = false
     if (file.hasOwnProperty('org')) {
       name = file.org
@@ -47,25 +47,35 @@ export async function scaffoldRepository (token, file) {
  * @param isOrg
  * @returns {Promise<void>}
  */
-async function _createRepo (file, octokit, userOrgName, isOrg) {
+async function _createRepo (file: GhacFile, octokit: Octokit, userOrgName: string, isOrg: boolean) {
   // Build the request object
-  const repo = {
-    name: file.name,
-    auto_init: true
+  let repo: Repository
+  if (isOrg) {
+    repo = {
+      name: file.name,
+      auto_init: true,
+      org: file.org
+    }
+  } else {
+    repo = {
+      name: file.name,
+      auto_init: true,
+      org: ''
+    }
   }
 
   // Add fields to repo object if in GHaC file
-  if (file.prototype.hasOwnProperty('description')) { repo.description = file.description }
-  if (file.hasOwnProperty('homepage')) { repo.homepage = file.homepage }
-  if (file.hasOwnProperty('private')) { repo.private = file.private === true }
-  if (file.hasOwnProperty('has_issues')) { repo.has_issues = file.has_issues === true }
-  if (file.hasOwnProperty('has_projects')) { repo.has_projects = file.has_projects === true }
-  if (file.hasOwnProperty('has_wiki')) { repo.has_wiki = file.has_wiki === true }
-  if (file.hasOwnProperty('gitignore_template')) { repo.gitignore_template = file.gitignore_template }
-  if (file.hasOwnProperty('license_template')) { repo.license_template = file.license_template }
-  if (file.hasOwnProperty('allow_squash_merge')) { repo.allow_squash_merge = file.allow_squash_merge === true }
-  if (file.hasOwnProperty('allow_merge_commit')) { repo.allow_merge_commit = file.allow_merge_commit === true }
-  if (file.hasOwnProperty('allow_rebase_merge')) { repo.allow_rebase_merge = file.allow_rebase_merge === true }
+  if (file.description) { repo.description = file.description }
+  if (file.homepage) { repo.homepage = file.homepage }
+  if (file.private) { repo.private = file.private }
+  if (file.has_issues) { repo.has_issues = file.has_issues }
+  if (file.has_projects) { repo.has_projects = file.has_projects }
+  if (file.has_wiki) { repo.has_wiki = file.has_wiki }
+  if (file.gitignore_template) { repo.gitignore_template = file.gitignore_template }
+  if (file.license_template) { repo.license_template = file.license_template }
+  if (file.allow_squash_merge) { repo.allow_squash_merge = file.allow_squash_merge }
+  if (file.allow_merge_commit) { repo.allow_merge_commit = file.allow_merge_commit }
+  if (file.allow_rebase_merge) { repo.allow_rebase_merge = file.allow_rebase_merge }
 
   // Send the request
   let createdRepo
@@ -77,7 +87,7 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
     createdRepo = await octokit.repos.createInOrg(repo)
 
     // Configure team collaborators
-    if (file.hasOwnProperty('team_collaborators') && !_.isEmpty(file.team_collaborators)) {
+    if (file.team_collaborators) {
       for (const team of file.team_collaborators) {
         const teamId = await _getTeamIdFromName(octokit, team.name, file.org)
         await octokit.teams.addOrUpdateRepo({
@@ -107,9 +117,12 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
     })
   }
   if (file.hasOwnProperty('vulnerability_alerts') && file.vulnerability_alerts === true) {
-    await octokit.repos.enableVulnerabilityAlerts({ owner: userOrgName, repo: createdRepo.data.name })
+    await octokit.repos.enableVulnerabilityAlerts({
+      owner: userOrgName,
+      repo: createdRepo.data.name
+    })
   }
-  if (file.hasOwnProperty('user_collaborators') && !!_.isEmpty(file.user_collaborators)) {
+  if (file.user_collaborators) {
     for (const user of file.user_collaborators) {
       await octokit.repos.addCollaborator({
         owner: userOrgName,
@@ -119,7 +132,7 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
       })
     }
   }
-  if (file.hasOwnProperty('deploy_keys')) {
+  if (file.deploy_keys) {
     for (const key of file.deploy_keys) {
       if (key.title) {
         await octokit.repos.addDeployKey({
@@ -141,12 +154,13 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
   }
 
   // Create projects
-  if (file.hasOwnProperty('projects')) {
+  if (file.projects) {
     for (const project of file.projects) {
       const params = {
         owner: userOrgName,
         repo: createdRepo.data.name,
-        name: project.name
+        name: project.name,
+        body: ''
       }
 
       if (project.hasOwnProperty('body')) { params.body = project.body }
@@ -154,7 +168,7 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
       const createdProject = await octokit.projects.createForRepo(params)
 
       // Collaborators
-      if (project.hasOwnProperty('collaborators')) {
+      if (project.collaborators) {
         for (const collaborator of project.collaborators) {
           await octokit.projects.addCollaborator({
             project_id: createdProject.data.id,
@@ -164,7 +178,7 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
       }
 
       // Columns
-      if (project.hasOwnProperty('columns')) {
+      if (project.columns) {
         for (const column of project.columns) {
           const createdColumn = await octokit.projects.createColumn({
             project_id: createdProject.data.id,
@@ -172,7 +186,7 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
           })
 
           // Cards
-          if (column.hasOwnProperty('cards')) {
+          if (column.cards) {
             for (const note of column.cards) {
               await octokit.projects.createCard({
                 column_id: createdColumn.data.id,
@@ -186,7 +200,7 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
   }
 
   // Create branches
-  if (file.hasOwnProperty('branches')) {
+  if (file.branches) {
     const master = await octokit.git.getRef({
       owner: userOrgName,
       repo: createdRepo.data.name,
@@ -204,79 +218,82 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
 
       // Prepare status checks
       let statusCheck = null
-      if (branch.protection.hasOwnProperty('required_status_checks')) {
-        const contexts = []
-        branch.protection.required_status_checks.contexts.forEach((context) => {
-          contexts.push(context)
-        })
-        statusCheck = {
-          strict: branch.protection.required_status_checks.strict,
-          contexts: contexts
+      if (branch.protection) {
+        if (branch.protection.required_status_checks) {
+          const contexts: string[] = []
+          if (branch.protection.required_status_checks.contexts) {
+            branch.protection.required_status_checks.contexts.forEach((context) => {
+              contexts.push(context)
+            })
+            statusCheck = {
+              strict: branch.protection.required_status_checks.strict,
+              contexts: contexts
+            }
+          }
         }
-      }
 
-      // Prepare pull request reviews
-      let requiredPrReviews = null
-      if (branch.protection.hasOwnProperty('required_pull_request_reviews')) {
-        requiredPrReviews = {}
-        let dismissalRestrictions = null
-        if (branch.protection.required_pull_request_reviews.hasOwnProperty('dismissal_restrictions')) {
-          dismissalRestrictions = {}
-          if (branch.protection.required_pull_request_reviews.dismissal_restrictions.hasOwnProperty('users')) {
-            const users = []
-            branch.protection.required_pull_request_reviews.dismissal_restrictions.users.forEach((user) => {
-              users.push(user)
-            })
-
-            const teams = []
-            branch.protection.required_pull_request_reviews.dismissal_restrictions.teams.forEach((team) => {
-              teams.push(team)
-            })
+        // Prepare pull request reviews
+        let requiredPrReviews: RequiredPullRequestReviews = {}
+        if (branch.protection.required_pull_request_reviews) {
+          let dismissalRestrictions: DismissalRestrictions = {}
+          if (branch.protection.required_pull_request_reviews.dismissal_restrictions) {
+            const users: string[] = []
+            const teams: string[] = []
+            if (branch.protection.required_pull_request_reviews.dismissal_restrictions.users) {
+              branch.protection.required_pull_request_reviews.dismissal_restrictions.users.forEach((user) => {
+                users.push(user)
+              })
+            }
+            if (branch.protection.required_pull_request_reviews.dismissal_restrictions.teams) {
+              branch.protection.required_pull_request_reviews.dismissal_restrictions.teams.forEach((team) => {
+                teams.push(team)
+              })
+            }
             dismissalRestrictions.users = users
             dismissalRestrictions.teams = teams
+            requiredPrReviews.dismissal_restrictions = dismissalRestrictions
           }
-          requiredPrReviews.dismissal_restrictions = dismissalRestrictions
+          if (branch.protection.required_pull_request_reviews.hasOwnProperty('dismiss_stale_reviews')) { requiredPrReviews.dismiss_stale_reviews = branch.protection.required_pull_request_reviews.dismiss_stale_reviews }
+          if (branch.protection.required_pull_request_reviews.hasOwnProperty('require_code_owner_reviews')) { requiredPrReviews.require_code_owner_reviews = branch.protection.required_pull_request_reviews.require_code_owner_reviews }
+          if (branch.protection.required_pull_request_reviews.hasOwnProperty('required_approving_review_count')) { requiredPrReviews.required_approving_review_count = branch.protection.required_pull_request_reviews.required_approving_review_count }
         }
-        if (branch.protection.required_pull_request_reviews.hasOwnProperty('dismiss_stale_reviews')) { requiredPrReviews.dismiss_stale_reviews = branch.protection.required_pull_request_reviews.dismiss_stale_reviews }
-        if (branch.protection.required_pull_request_reviews.hasOwnProperty('require_code_owner_reviews')) { requiredPrReviews.require_code_owner_reviews = branch.protection.required_pull_request_reviews.require_code_owner_reviews }
-        if (branch.protection.required_pull_request_reviews.hasOwnProperty('required_approving_review_count')) { requiredPrReviews.required_approving_review_count = branch.protection.required_pull_request_reviews.required_approving_review_count }
-      }
-      // Prepare restrictions
-      let restrictions = null
-      if (branch.protection.hasOwnProperty('restrictions')) {
-        restrictions = {}
-        const users = []
-        if (branch.protection.restrictions.hasOwnProperty('users')) {
-          branch.protection.restrictions.users.forEach((user) => {
-            users.push(user)
-          })
-        }
-        restrictions.users = users
-        const teams = []
-        if (branch.protection.restrictions.hasOwnProperty('teams')) {
-          branch.protection.restrictions.teams.forEach((team) => {
-            teams.push(team)
-          })
-        }
-        restrictions.teams = teams
-      }
 
-      await octokit.repos.updateBranchProtection({
-        owner: userOrgName,
-        repo: createdRepo.data.name,
-        branch: branch.name,
-        required_status_checks: statusCheck,
-        enforce_admins: branch.protection.enforce_admins,
-        required_pull_request_reviews: requiredPrReviews,
-        restrictions: restrictions
-      })
+        // Prepare restrictions
+        let restrictions: BranchRestrictions = {}
+        if (branch.protection.restrictions) {
+          const users: string[] = []
+          if (branch.protection.restrictions.users) {
+            branch.protection.restrictions.users.forEach((user) => {
+              users.push(user)
+            })
+          }
+          restrictions.users = users
+          const teams: string[] = []
+          if (branch.protection.restrictions.teams) {
+            branch.protection.restrictions.teams.forEach((team) => {
+              teams.push(team)
+            })
+          }
+          restrictions.teams = teams
+        }
+
+        await octokit.repos.updateBranchProtection({
+          owner: userOrgName,
+          repo: createdRepo.data.name,
+          branch: branch.name,
+          required_status_checks: statusCheck,
+          enforce_admins: branch.protection.enforce_admins,
+          required_pull_request_reviews: requiredPrReviews,
+          restrictions: restrictions
+        })
+      }
     }
   }
 
   // Configure pages
-  if (file.hasOwnProperty('pages') && file.pages.enabled === true) {
-    let source = null
-    if (file.pages.hasOwnProperty('branch') && file.pages.hasOwnProperty('path')) {
+  if (file.pages && file.pages.enabled === true) {
+    let source = {}
+    if (file.pages.branch && file.pages.path) {
       source = {
         branch: file.pages.branch,
         path: file.pages.path
@@ -299,7 +316,7 @@ async function _createRepo (file, octokit, userOrgName, isOrg) {
  * @param orgName
  * @returns {Promise<number>}
  */
-async function _getTeamIdFromName (octokit, teamName, orgName) {
+async function _getTeamIdFromName (octokit: Octokit, teamName: string, orgName: string) {
   const { data: team } = await octokit.teams.getByName({
     org: orgName,
     team_slug: teamName
