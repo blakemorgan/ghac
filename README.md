@@ -107,7 +107,7 @@ deploy_keys:
 | `columns` | Array\<Objects\> | No | None | Array of columns. Requires the `name` field.
 | `name` | String | Yes | None | The name of the column.
 | `cards` | Array\<note\> | No | None | The cards in each column. Contains an array of notes.
-| `note` | String | No | None | Notes on each card.
+| `note` | Array\<String\> | No | None | Notes on each card.
 
 ```yaml
 projects:
@@ -120,9 +120,9 @@ projects:
     columns:
       - name: # string, required with parent
         cards:
-          - note: # string 1
-          - note: # string 2
-          - note: # string ...
+          - # string 1
+          - # string 2
+          - # string ...
 ```
 
 ### Branches
