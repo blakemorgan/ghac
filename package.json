@@ -1,6 +1,6 @@
 {
   "name": "ghac",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "GitHub as code.",
   "main": "dist/tools.ts",
   "types": "src/index.d.ts",
