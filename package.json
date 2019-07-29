@@ -5,7 +5,6 @@
   "main": "dist/tools.ts",
   "types": "src/index.d.ts",
   "scripts": {
-    "prepublish": "tsc",
     "test": "jest",
     "lint": "eslint src/**/*.js"
   },
