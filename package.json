@@ -2,7 +2,6 @@
   "name": "ghac",
   "version": "0.1.0",
   "description": "GitHub as code.",
-  "main": "src/cli.js",
   "scripts": {
     "test": "jest",
     "lint": "eslint src/**/*.js"
