@@ -1,3 +1,5 @@
+**Don't use this. Use an actual IaC tool (I'm biased to Terraform).** I made this before I understood how flexible IaC can be.
+
 ![GitHub](https://img.shields.io/github/license/blakemorgan/ghac.svg?style=flat)
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/blakemorgan/ghac.svg)
 
